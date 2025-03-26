@@ -142,7 +142,7 @@ function detectBeat() {
 
 function drawStars(radiusMulti) {
   let starScale = 0.6; // scale factor for star sizes
-  let posScale = 0.75; // scale factor for star positions (increased slightly for more spacing)
+  let posScale = 0.80; // scale factor for star positions (increased slightly for more spacing)
   colorMode(HSB, 360, 100, 100, 255);
   let starGroups = [
     {
