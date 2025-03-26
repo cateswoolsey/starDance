@@ -4,16 +4,15 @@ let dots = [];
 let radius;
 let fft;
 let amplitude;
-let frames = 30;
-let beatTimer = 0;
-let beatCounter = 0;
-let radiusMulti = 1.0;
-let targetMulti = 1.0;
-let intensity = 0.1;
-let reduceRate = 0.98;
 let globalBrightness = 40;
 
-//load in the song.
+let radiusMulti = 1.0;
+let targetMulti = 1.0;
+let intensity = 1;       // Adjust if needed
+let beatDuration = 500;    // Beat effect duration in ms
+let lastBeatTime = 0;      // Last time a beat was triggered
+
+// load in the song.
 let sounds = [];
 function preload() {
   sounds.push(loadSound("media/Sidewalks and Skeletons - GOTH.mp3"));
@@ -45,15 +44,12 @@ function draw() {
 
   if (sounds[0].isPlaying()) {
     detectBeat();
+    // Interpolate radiusMulti toward targetMulti (affecting star sizes)
     radiusMulti = lerp(radiusMulti, targetMulti, 0.15);
     noiseDrift += 0.1;
-  
-    // smoothly fade up to full brightness
     globalBrightness = lerp(globalBrightness, 255, 0.05);
   } else {
     radiusMulti = lerp(radiusMulti, 1.0, 0.15);
-  
-    // smoothly fade down to dark
     globalBrightness = lerp(globalBrightness, 40, 0.05);
   }
 
@@ -79,10 +75,8 @@ function draw() {
       color(148, 0, 211)
     ];
     let endColor = random(rainbowColors);
-
     let lerpAmount = random(0, 1);
     let baseColor = lerpColor(startColor, endColor, lerpAmount);
-
     let brightness = random(globalBrightness * 0.4, globalBrightness);
 
     let finalColor = color(
@@ -104,7 +98,6 @@ function draw() {
 
 function DotFace(face) {
   let x = 0, y = 0, z = 0;
-
   if (face === "front") {
     x = random(-distance, distance);
     y = random(-distance, distance);
@@ -130,25 +123,26 @@ function DotFace(face) {
     y = distance;
     z = random(-distance, distance);
   }
-
   return { x, y, z, size: random(1, 15) };
 }
 
 function detectBeat() {
   let level = amplitude.getLevel();
   let dynamicThreshold = 0.01;
-
-  if (level > dynamicThreshold && beatTimer <= 0) {
-    targetMulti = min(2.0, targetMulti + intensity);
-    beatTimer = frames;
-  } else if (beatTimer > 0) {
-    beatTimer--;
-    targetMulti *= reduceRate;
-    if (beatTimer === 0) targetMulti = 1.0;
+  
+  // Use millis() to check if enough time has passed since the last beat
+  if (level > dynamicThreshold && (millis() - lastBeatTime > beatDuration)) {
+    targetMulti = 2.0;  // Set the pulsation peak value
+    lastBeatTime = millis();
+  } else {
+    // Gradually decay targetMulti back to 1.0, using deltaTime for smoother timing
+    targetMulti = lerp(targetMulti, 1.0, deltaTime / beatDuration);
   }
 }
 
 function drawStars(radiusMulti) {
+  let starScale = 0.4; // scale factor for star sizes
+  let posScale = 0.55; // scale factor for star positions (increased slightly for more spacing)
   colorMode(HSB, 360, 100, 100, 255);
   let starGroups = [
     {
@@ -216,23 +210,26 @@ function drawStars(radiusMulti) {
   for (let group of starGroups) {
     for (let pos of group.positions) {
       push();
-      translate(pos.x * radiusMulti, pos.y * radiusMulti, pos.z * radiusMulti);
+      // Multiply positions by posScale to space them out accordingly
+      translate(pos.x * posScale, pos.y * posScale, pos.z * posScale);
       rotateVector(pos.rotationAxis, HALF_PI);
-
+      
       stroke(255);
       strokeWeight(2);
       noFill();
-      drawStar(0, 0, group.size * 0.55, group.size * 1.1, 5);
-
+      // Scale star sizes by starScale and pulsate with radiusMulti
+      drawStar(0, 0, group.size * 0.55 * starScale * radiusMulti, group.size * 1.1 * starScale * radiusMulti, 5);
+      
       noStroke();
       fill(group.color);
-      drawStar(0, 0, group.size * 0.5 * radiusMulti, group.size * radiusMulti, 5);
+      drawStar(0, 0, group.size * 0.5 * starScale * radiusMulti, group.size * starScale * radiusMulti, 5);
       pop();
     }
   }
-
   colorMode(RGB, 255);
 }
+
+
 
 function drawStar(x, y, radius1, radius2, npoints) {
   let angle = TWO_PI / npoints;
