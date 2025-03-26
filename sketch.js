@@ -19,7 +19,12 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
+  createCanvas(800, 400, WEBGL);
+
+  camera(0, 0, 1500,   // x, y, z position of the camera
+    0, 0, 0,     // center the camera is looking at
+    0, 1, 0);    // which way is 'up'
+    
   noStroke();
 
   radius = min(width, height) / 4;
@@ -40,6 +45,7 @@ function setup() {
 
 function draw() {
   background(0);
+
   orbitControl();
 
   if (sounds[0].isPlaying()) {
@@ -141,8 +147,8 @@ function detectBeat() {
 }
 
 function drawStars(radiusMulti) {
-  let starScale = 0.6; // scale factor for star sizes
-  let posScale = 0.80; // scale factor for star positions (increased slightly for more spacing)
+  let starScale = 1.5; // scale factor for star sizes
+  let posScale = 2; // scale factor for star positions (increased slightly for more spacing)
   colorMode(HSB, 360, 100, 100, 255);
   let starGroups = [
     {
